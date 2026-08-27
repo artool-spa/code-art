@@ -85,12 +85,15 @@
   /* sección del wordmark: el canvas dibuja aquí el negro con el recorte */
   #marca { height: clamp(280px, 30vw, 480px); }
 
-  /* texto simulado de landing */
+  /* texto simulado de landing: llena el viewport para que, al llegar
+     abajo, las burbujas queden completamente fuera de la vista */
   .prosa {
+    min-height: 100vh;
     padding: 6.5rem 1.5rem 7rem;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 1.4rem;
   }
   .prosa h2 {
@@ -145,6 +148,7 @@
     height: 100%;
     display: block;
     cursor: crosshair;
+    z-index: -1; /* detrás del contenido: las secciones negras lo cubren */
   }
 
   .pista {
