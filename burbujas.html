@@ -239,12 +239,12 @@
   <div class="control">
     <div class="fila">
       <label for="tam-min">Tamaño de burbuja</label>
-      <output id="tam-out">5–46 px</output>
+      <output id="tam-out">15–138 px</output>
     </div>
     <div class="rango-doble">
       <div class="pista-rango"><div class="pista-relleno" id="tam-relleno"></div></div>
-      <input type="range" id="tam-min" min="3" max="60" value="5" step="1" aria-label="Tamaño mínimo">
-      <input type="range" id="tam-max" min="3" max="60" value="46" step="1" aria-label="Tamaño máximo">
+      <input type="range" id="tam-min" min="9" max="180" value="15" step="1" aria-label="Tamaño mínimo">
+      <input type="range" id="tam-max" min="9" max="180" value="138" step="1" aria-label="Tamaño máximo">
     </div>
   </div>
 
@@ -265,8 +265,8 @@
     posLuz: 0.5,      // posición horizontal de la luz (0–1)
     viscosidad: 4.5,  // 1 = fluido, 10 = denso
     cantidad: 84,     // total de burbujas, repartidas entre bandas
-    rMin: 5,          // radio mínimo en px (banda cercana)
-    rMax: 46,         // radio máximo en px (banda cercana)
+    rMin: 15,         // radio mínimo en px (banda cercana)
+    rMax: 138,        // radio máximo en px (banda cercana)
   };
 
   // ——— Bandas de profundidad (0 = cercana … 3 = profunda) ———
@@ -333,9 +333,11 @@
   }
 
   // Velocidad terminal tipo Stokes: crece con el radio, cae con la viscosidad.
+  // El radio se normaliza por el factor visual 3x para conservar la calma
+  // del movimiento con burbujas grandes.
   function velocidadTerminal(bur) {
     const b = BANDAS[bur.banda];
-    return ((8 + bur.r / b.escala * 2.2) * 6 / estado.viscosidad) * b.vel;
+    return ((8 + bur.r / (3 * b.escala) * 2.2) * 6 / estado.viscosidad) * b.vel;
   }
 
   // ——— Parallax por puntero, con inercia ———
@@ -395,7 +397,7 @@
     burbujas.splice(burbujas.indexOf(bur), 1);
 
     // Muy pequeña: se disuelve sin dividirse.
-    const rMin = 4.5 * b.escala;
+    const rMin = 13.5 * b.escala;
     if (bur.r < rMin * 1.9) return;
 
     const n = Math.random() < 0.5 ? 2 : 3;
@@ -611,7 +613,7 @@
   const tamMax = document.getElementById("tam-max");
   const tamOut = document.getElementById("tam-out");
   const tamRelleno = document.getElementById("tam-relleno");
-  const TAM_TOPE = { min: 3, max: 60, sep: 2 };
+  const TAM_TOPE = { min: 9, max: 180, sep: 6 };
 
   function aplicarTamano(desde) {
     let lo = parseFloat(tamMin.value);
