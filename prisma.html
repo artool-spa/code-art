@@ -438,22 +438,34 @@
   }
   const BASE = alinearBase();
 
-  // ——— Interacción: giro automático lento + arrastre ———
-  let yaw = 0.6, pitch = 0, girando = false, ultimoToque = -10;
-  let px = 0, py = 0;
+  // ——— Interacción: arrastre con inercia y roce hacia el giro base ———
+  const VEL_BASE = 0.10;   // rad/s del giro perezoso
+  const ROCE = 0.9;        // constante de tiempo del roce (s)
+  let yaw = 0.6, pitch = 0, girando = false;
+  let velYaw = VEL_BASE, velPitch = 0;
+  let px = 0, py = 0, tMov = 0;
 
   lienzo.addEventListener("pointerdown", (e) => {
     girando = true;
+    velYaw = 0; velPitch = 0;
     lienzo.classList.add("arrastrando");
     lienzo.setPointerCapture(e.pointerId);
     px = e.clientX; py = e.clientY;
+    tMov = reloj();
   });
   addEventListener("pointermove", (e) => {
     if (!girando) return;
-    yaw += (e.clientX - px) * 0.006;
-    pitch = Math.max(-0.5, Math.min(0.5, pitch + (e.clientY - py) * 0.004));
+    const ahora = reloj();
+    const dtm = Math.max(1e-3, ahora - tMov);
+    tMov = ahora;
+    const dYaw = (e.clientX - px) * 0.006;
+    const dPitch = (e.clientY - py) * 0.004;
+    yaw += dYaw;
+    pitch = Math.max(-0.5, Math.min(0.5, pitch + dPitch));
+    // velocidad instantanea suavizada y acotada: es la inercia al soltar
+    velYaw = Math.max(-7, Math.min(7, velYaw * 0.7 + (dYaw / dtm) * 0.3));
+    velPitch = Math.max(-4, Math.min(4, velPitch * 0.7 + (dPitch / dtm) * 0.3));
     px = e.clientX; py = e.clientY;
-    ultimoToque = reloj();
     if (reducirMovimiento.matches) pintar(reloj());
   });
   addEventListener("pointerup", () => {
@@ -494,7 +506,14 @@
     const t = reloj();
     const dt = Math.min(0.05, t - anterior);
     anterior = t;
-    if (!girando && t - ultimoToque > 3) yaw += dt * 0.10; // giro perezoso
+    if (!girando) {
+      // el roce lleva la velocidad de vuelta al giro base (y el cabeceo a cero)
+      const roce = 1 - Math.exp(-dt / ROCE);
+      velYaw += (VEL_BASE - velYaw) * roce;
+      velPitch -= velPitch * roce;
+      yaw += velYaw * dt;
+      pitch = Math.max(-0.5, Math.min(0.5, pitch + velPitch * dt));
+    }
     pintar(t);
     requestAnimationFrame(cuadro);
   }
