@@ -18,11 +18,13 @@
 
   html, body {
     min-height: 100%;
-    background: var(--liquido-bajo);
     color: var(--texto);
     font-family: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
   }
-  body { overflow-x: hidden; }
+  /* El fondo vive SOLO en html: el fondo de body se pintaría por encima
+     del canvas con z-index -1 y taparía toda la escena. */
+  html { background: var(--liquido-bajo); }
+  body { background: transparent; overflow-x: hidden; }
 
   /* ——— Landing desplazable: el scroll revela el parallax ———
      main deja pasar los clics al canvas; las secciones opacas los capturan */
