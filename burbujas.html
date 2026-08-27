@@ -1,0 +1,671 @@
+<title>Ascenso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,300;1,400&family=Outfit:wght@300;400;500&display=swap">
+
+<style>
+  :root {
+    --liquido-alto: #2f2f3d;   /* slate-900 */
+    --liquido-bajo: #0c0b12;   /* derivado hacia black */
+    --panel: rgba(47, 47, 61, 0.55);
+    --borde: rgba(244, 243, 246, 0.10);
+    --texto: #f4f3f6;          /* gray-100 */
+    --etiqueta: #a6a2b8;       /* slate-400 */
+    --acento: #b288b9;         /* purple-500 · brand */
+    --acento-claro: #d7c4db;   /* purple-300 */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--liquido-bajo);
+    color: var(--texto);
+    font-family: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+    overflow: hidden;
+  }
+
+  #lienzo {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+  }
+
+  .pista {
+    font-size: 0.72rem;
+    font-weight: 300;
+    color: var(--etiqueta);
+    letter-spacing: 0.03em;
+  }
+
+  /* ——— Sello tipográfico ——— */
+  .sello {
+    position: fixed;
+    top: 2rem;
+    left: 2.25rem;
+    pointer-events: none;
+    user-select: none;
+  }
+  .sello h1 {
+    font-family: "Cormorant Garamond", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+    letter-spacing: 0.04em;
+    color: var(--texto);
+    text-wrap: balance;
+  }
+  .sello p {
+    margin-top: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--etiqueta);
+  }
+
+  /* ——— Panel de control ——— */
+  .panel {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    width: min(300px, calc(100vw - 3rem));
+    padding: 1.15rem 1.25rem 1.3rem;
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    backdrop-filter: blur(16px) saturate(1.25);
+    -webkit-backdrop-filter: blur(16px) saturate(1.25);
+    display: flex;
+    flex-direction: column;
+    gap: 1.05rem;
+  }
+  .panel .titulo-panel {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--etiqueta);
+  }
+  .control { display: flex; flex-direction: column; gap: 0.45rem; }
+  .control .fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .control label {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--texto);
+  }
+  .control output {
+    font-size: 0.78rem;
+    font-weight: 300;
+    color: var(--acento-claro);
+    font-variant-numeric: tabular-nums;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 22px;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(244, 243, 246, 0.18);
+  }
+  input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(244, 243, 246, 0.18);
+  }
+  /* El slider de tono muestra su propio degradado de matices */
+  input[type="range"]#tono::-webkit-slider-runnable-track {
+    background: linear-gradient(90deg,
+      hsl(200 35% 70%), hsl(240 35% 72%), hsl(280 35% 72%),
+      hsl(300 35% 72%), hsl(330 35% 74%));
+  }
+  input[type="range"]#tono::-moz-range-track {
+    background: linear-gradient(90deg,
+      hsl(200 35% 70%), hsl(240 35% 72%), hsl(280 35% 72%),
+      hsl(300 35% 72%), hsl(330 35% 74%));
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: var(--acento);
+    border: 2px solid var(--texto);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--acento);
+    border: 2px solid var(--texto);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  }
+  input[type="range"]:focus-visible {
+    outline: 2px solid var(--acento-claro);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  /* ——— Slider doble (rango mín–máx) ——— */
+  .rango-doble { position: relative; height: 22px; }
+  .rango-doble input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    pointer-events: none; /* solo los pulgares reciben el puntero */
+  }
+  .rango-doble input::-webkit-slider-runnable-track { background: transparent; }
+  .rango-doble input::-moz-range-track { background: transparent; }
+  .rango-doble input::-webkit-slider-thumb { pointer-events: auto; }
+  .rango-doble input::-moz-range-thumb { pointer-events: auto; }
+  .pista-rango {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    height: 4px;
+    transform: translateY(-50%);
+    border-radius: 2px;
+    background: rgba(244, 243, 246, 0.18);
+  }
+  .pista-relleno {
+    position: absolute;
+    top: 0; bottom: 0;
+    border-radius: 2px;
+    background: var(--acento);
+  }
+
+  @media (max-width: 560px) {
+    .sello { top: 1.25rem; left: 1.25rem; }
+    .panel { right: 50%; transform: translateX(50%); bottom: 1rem; }
+  }
+</style>
+
+<canvas id="lienzo" aria-hidden="true"></canvas>
+
+<header class="sello">
+  <h1>Ascenso</h1>
+  <p>burbujas en medio viscoso</p>
+</header>
+
+<form class="panel" aria-label="Controles de la animación">
+  <span class="titulo-panel">Medio · luz · burbujas</span>
+
+  <div class="control">
+    <div class="fila">
+      <label for="tono">Tono de luz</label>
+      <output id="tono-out">púrpura</output>
+    </div>
+    <input type="range" id="tono" min="200" max="330" value="291" step="1">
+  </div>
+
+  <div class="control">
+    <div class="fila">
+      <label for="posicion">Posición de la luz</label>
+      <output id="posicion-out">centro</output>
+    </div>
+    <input type="range" id="posicion" min="0" max="100" value="50" step="1">
+  </div>
+
+  <div class="control">
+    <div class="fila">
+      <label for="viscosidad">Viscosidad</label>
+      <output id="viscosidad-out">media</output>
+    </div>
+    <input type="range" id="viscosidad" min="1" max="10" value="4.5" step="0.1">
+  </div>
+
+  <div class="control">
+    <div class="fila">
+      <label for="cantidad">Cantidad de burbujas</label>
+      <output id="cantidad-out">84</output>
+    </div>
+    <input type="range" id="cantidad" min="20" max="180" value="84" step="2">
+  </div>
+
+  <div class="control">
+    <div class="fila">
+      <label for="tam-min">Tamaño de burbuja</label>
+      <output id="tam-out">5–46 px</output>
+    </div>
+    <div class="rango-doble">
+      <div class="pista-rango"><div class="pista-relleno" id="tam-relleno"></div></div>
+      <input type="range" id="tam-min" min="3" max="60" value="5" step="1" aria-label="Tamaño mínimo">
+      <input type="range" id="tam-max" min="3" max="60" value="46" step="1" aria-label="Tamaño máximo">
+    </div>
+  </div>
+
+  <p class="pista">Haz clic sobre una burbuja para reventarla.</p>
+</form>
+
+<script>
+(() => {
+  "use strict";
+
+  const lienzo = document.getElementById("lienzo");
+  const ctx = lienzo.getContext("2d");
+  const reducirMovimiento = matchMedia("(prefers-reduced-motion: reduce)");
+
+  // ——— Estado controlado por los sliders ———
+  const estado = {
+    tono: 291,        // matiz HSL de la luz cenital
+    posLuz: 0.5,      // posición horizontal de la luz (0–1)
+    viscosidad: 4.5,  // 1 = fluido, 10 = denso
+    cantidad: 84,     // total de burbujas, repartidas entre bandas
+    rMin: 5,          // radio mínimo en px (banda cercana)
+    rMax: 46,         // radio máximo en px (banda cercana)
+  };
+
+  // ——— Bandas de profundidad (0 = cercana … 3 = profunda) ———
+  // Cada banda tiene su propio canvas intermedio: se dibuja nítida y se
+  // compone sobre el principal con un solo blur por capa (barato y suave).
+  // `frac` reparte la cantidad total del slider entre las bandas.
+  const BANDAS = [
+    { escala: 1.00, vel: 1.00, blur: 0.0, alfa: 1.00, parallax: 1.00, frac: 0.14, n: 12, res: 1.00 },
+    { escala: 0.72, vel: 0.68, blur: 1.6, alfa: 0.90, parallax: 0.60, frac: 0.21, n: 18, res: 1.00 },
+    { escala: 0.50, vel: 0.44, blur: 3.6, alfa: 0.72, parallax: 0.34, frac: 0.29, n: 24, res: 0.75 },
+    { escala: 0.34, vel: 0.27, blur: 7.0, alfa: 0.52, parallax: 0.16, frac: 0.36, n: 30, res: 0.50 },
+  ];
+
+  let W = 0, H = 0, dpr = 1;
+  const capas = BANDAS.map(() => document.createElement("canvas").getContext("2d"));
+
+  function redimensionar() {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth;
+    H = innerHeight;
+    lienzo.width = W * dpr;
+    lienzo.height = H * dpr;
+    capas.forEach((capa, i) => {
+      const r = BANDAS[i].res * dpr;
+      capa.canvas.width = W * r;
+      capa.canvas.height = H * r;
+    });
+  }
+
+  // ——— Burbujas ———
+  const burbujas = [];
+
+  // Radio dentro del rango elegido, sesgado hacia lo pequeño (pow 1.8):
+  // abundan las chicas, las grandes aparecen pero no dominan.
+  function radioAleatorio(banda) {
+    return (estado.rMin + (estado.rMax - estado.rMin) * Math.pow(Math.random(), 1.8))
+         * BANDAS[banda].escala;
+  }
+
+  function crearBurbuja(banda, yInicial) {
+    const r = radioAleatorio(banda);
+    return {
+      banda,
+      x: Math.random(),                                   // 0–1 del ancho
+      y: yInicial !== undefined ? yInicial : Math.random() * (H + 200),
+      r,
+      rObj: r,                                            // radio objetivo (retamaño suave)
+      fase: Math.random() * Math.PI * 2,
+      fase2: Math.random() * Math.PI * 2,
+      vy: 0,                                              // velocidad actual (relajación viscosa)
+    };
+  }
+
+  // Radio visible: las burbujas se expanden levemente al subir (descompresión).
+  function radioActual(bur) {
+    return bur.r * (1 + 0.14 * (1 - bur.y / H));
+  }
+
+  function poblar() {
+    burbujas.length = 0;
+    BANDAS.forEach((b, i) => {
+      for (let k = 0; k < b.n; k++) burbujas.push(crearBurbuja(i));
+    });
+  }
+
+  // Velocidad terminal tipo Stokes: crece con el radio, cae con la viscosidad.
+  function velocidadTerminal(bur) {
+    const b = BANDAS[bur.banda];
+    return ((8 + bur.r / b.escala * 2.2) * 6 / estado.viscosidad) * b.vel;
+  }
+
+  // ——— Parallax por puntero, con inercia ———
+  const puntero = { x: 0, y: 0, ox: 0, oy: 0 };
+  addEventListener("pointermove", (e) => {
+    puntero.x = (e.clientX / W - 0.5) * 36;
+    puntero.y = (e.clientY / H - 0.5) * 20;
+  });
+
+  // ——— Ondas de reventón ———
+  const ondas = [];
+  const DURACION_ONDA = 0.7; // segundos
+
+  // ——— Simulación ———
+  function simular(dt, t) {
+    // Un medio más viscoso responde más lento a los cambios (relajación).
+    const tau = 0.25 + estado.viscosidad * 0.15;
+    for (let i = burbujas.length - 1; i >= 0; i--) {
+      const bur = burbujas[i];
+      const vt = velocidadTerminal(bur);
+      bur.vy += (vt - bur.vy) * Math.min(1, dt / tau);
+      bur.y -= bur.vy * dt;
+      // Retamaño suave cuando cambia el rango del slider doble.
+      bur.r += (bur.rObj - bur.r) * Math.min(1, dt / 0.8);
+      if (bur.y < -60) {
+        // Las divisiones aumentan la población: al salir por arriba, el
+        // excedente de la banda se retira en vez de reaparecer abajo.
+        let enBanda = 0;
+        for (const o of burbujas) if (o.banda === bur.banda) enBanda++;
+        if (enBanda > BANDAS[bur.banda].n) burbujas.splice(i, 1);
+        else Object.assign(bur, crearBurbuja(bur.banda, H + 40 + Math.random() * 120));
+      }
+    }
+    for (let i = ondas.length - 1; i >= 0; i--) {
+      ondas[i].edad += dt;
+      if (ondas[i].edad > DURACION_ONDA) ondas.splice(i, 1);
+    }
+    puntero.ox += (puntero.x - puntero.ox) * Math.min(1, dt * 2.5);
+    puntero.oy += (puntero.y - puntero.oy) * Math.min(1, dt * 2.5);
+  }
+
+  // ——— Reventar: divide la burbuja en 2–3 hijas conservando el volumen ———
+  function posicionPantalla(bur, t) {
+    const b = BANDAS[bur.banda];
+    return {
+      x: bur.x * W + vaiven(bur, t) + puntero.ox * b.parallax,
+      y: bur.y + puntero.oy * b.parallax,
+    };
+  }
+
+  function reventar(bur, t) {
+    const b = BANDAS[bur.banda];
+    const p = posicionPantalla(bur, t);
+    if (!reducirMovimiento.matches) {
+      ondas.push({ banda: bur.banda, x: p.x, y: p.y, r: radioActual(bur), edad: 0 });
+    }
+    burbujas.splice(burbujas.indexOf(bur), 1);
+
+    // Muy pequeña: se disuelve sin dividirse.
+    const rMin = 4.5 * b.escala;
+    if (bur.r < rMin * 1.9) return;
+
+    const n = Math.random() < 0.5 ? 2 : 3;
+    for (let k = 0; k < n; k++) {
+      const hija = crearBurbuja(bur.banda, bur.y + (Math.random() - 0.5) * bur.r * 0.8);
+      // Conservación de volumen: r³ del total ≈ suma de r³ de las hijas.
+      hija.r = Math.max(rMin * 0.7, bur.r * Math.cbrt(1 / n) * (0.82 + Math.random() * 0.36));
+      hija.rObj = hija.r;
+      hija.x = bur.x + ((n === 1 ? 0 : k / (n - 1)) - 0.5) * (bur.r * 2.4 / W)
+             + (Math.random() - 0.5) * 0.008;
+      // Las hijas salen impulsadas y luego relajan a su nueva velocidad terminal.
+      hija.vy = bur.vy * (1.15 + Math.random() * 0.45);
+      burbujas.push(hija);
+    }
+  }
+
+  // Vaivén lateral: más amplio y rápido en medio fluido, casi recto en denso.
+  function vaiven(bur, t) {
+    const amp = (4 + bur.r * 0.9) * (2.6 / (1.4 + estado.viscosidad));
+    const f = (0.35 + 8 / (bur.r + 8)) * (2 / (1 + estado.viscosidad * 0.32));
+    return Math.sin(t * f + bur.fase) * amp
+         + Math.sin(t * f * 0.53 + bur.fase2) * amp * 0.45;
+  }
+
+  // ——— Dibujo ———
+  function colorLuz(alfa, luz = 78, sat = 38) {
+    return `hsl(${estado.tono} ${sat}% ${luz}% / ${alfa})`;
+  }
+
+  function dibujarFondo() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#2f2f3d");
+    g.addColorStop(0.55, "#1a1a24");
+    g.addColorStop(1, "#0c0b12");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // Poza de luz cenital: un resplandor radial que entra desde arriba.
+    const lx = estado.posLuz * W;
+    const radio = Math.max(W, H) * 0.85;
+    const luz = ctx.createRadialGradient(lx, -H * 0.25, 0, lx, -H * 0.25, radio);
+    luz.addColorStop(0, colorLuz(0.55, 82));
+    luz.addColorStop(0.4, colorLuz(0.22, 74));
+    luz.addColorStop(1, colorLuz(0, 60));
+    ctx.fillStyle = luz;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function dibujarBurbuja(capa, bur, t, res) {
+    const p = posicionPantalla(bur, t);
+    const px = p.x * res;
+    const py = p.y * res;
+    const r = radioActual(bur) * res;
+    if (px < -r * 2 || px > capa.canvas.width + r * 2) return;
+
+    // Dirección hacia la luz cenital, para el brillo especular.
+    const lx = estado.posLuz * W * res, ly = -H * 0.25 * res;
+    const dx = px - lx, dy = py - ly;
+    const d = Math.hypot(dx, dy) || 1;
+    const hx = px - (dx / d) * r * 0.42;
+    const hy = py - (dy / d) * r * 0.42;
+
+    // Cuerpo: película fina, casi vacía al centro, tinte hacia el borde.
+    const cuerpo = capa.createRadialGradient(px, py, r * 0.15, px, py, r);
+    cuerpo.addColorStop(0, colorLuz(0.02, 70, 30));
+    cuerpo.addColorStop(0.72, colorLuz(0.07, 68, 32));
+    cuerpo.addColorStop(0.92, colorLuz(0.20, 76, 36));
+    cuerpo.addColorStop(1, "rgba(244, 243, 246, 0.26)");
+    capa.fillStyle = cuerpo;
+    capa.beginPath();
+    capa.arc(px, py, r, 0, Math.PI * 2);
+    capa.fill();
+
+    // Brillo especular orientado hacia la luz.
+    const brillo = capa.createRadialGradient(hx, hy, 0, hx, hy, r * 0.5);
+    brillo.addColorStop(0, "rgba(255, 255, 255, 0.75)");
+    brillo.addColorStop(0.45, colorLuz(0.28, 88));
+    brillo.addColorStop(1, "rgba(255, 255, 255, 0)");
+    capa.fillStyle = brillo;
+    capa.beginPath();
+    capa.arc(hx, hy, r * 0.5, 0, Math.PI * 2);
+    capa.fill();
+
+    // Refracción cáustica en el borde opuesto a la luz.
+    const cx = px + (dx / d) * r * 0.62;
+    const cy = py + (dy / d) * r * 0.62;
+    const caustica = capa.createRadialGradient(cx, cy, 0, cx, cy, r * 0.42);
+    caustica.addColorStop(0, colorLuz(0.22, 72));
+    caustica.addColorStop(1, colorLuz(0, 72));
+    capa.fillStyle = caustica;
+    capa.beginPath();
+    capa.arc(cx, cy, r * 0.42, 0, Math.PI * 2);
+    capa.fill();
+  }
+
+  function dibujar(t) {
+    dibujarFondo();
+
+    for (let i = BANDAS.length - 1; i >= 0; i--) {
+      const b = BANDAS[i];
+      const capa = capas[i];
+      const res = b.res * dpr;
+      capa.clearRect(0, 0, capa.canvas.width, capa.canvas.height);
+      for (const bur of burbujas) {
+        if (bur.banda === i) dibujarBurbuja(capa, bur, t, res);
+      }
+      // Ondas de reventón: un anillo que se expande y desvanece.
+      for (const o of ondas) {
+        if (o.banda !== i) continue;
+        const avance = o.edad / DURACION_ONDA;
+        capa.strokeStyle = `hsl(${estado.tono} 45% 86% / ${0.55 * (1 - avance)})`;
+        capa.lineWidth = Math.max(1, 2.5 * (1 - avance)) * res;
+        capa.beginPath();
+        capa.arc(o.x * res, o.y * res, o.r * (1 + avance * 1.9) * res, 0, Math.PI * 2);
+        capa.stroke();
+      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = b.alfa;
+      if (b.blur > 0) ctx.filter = `blur(${b.blur * dpr}px)`;
+      ctx.drawImage(capa.canvas, 0, 0, lienzo.width, lienzo.height);
+      ctx.filter = "none";
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ——— Bucle ———
+  let anterior = 0;
+  let tActual = 0; // último instante dibujado, para la prueba de impacto del clic
+  function cuadro(ms) {
+    const t = ms / 1000;
+    const dt = Math.min(0.05, t - anterior || 0.016);
+    anterior = t;
+    tActual = t;
+    simular(dt, t);
+    dibujar(t);
+    if (!reducirMovimiento.matches) requestAnimationFrame(cuadro);
+  }
+
+  function cuadroEstatico() {
+    // Con movimiento reducido: una sola imagen fija, sin animación.
+    for (const bur of burbujas) bur.r = bur.rObj; // sin lerp: aplica el tamaño de inmediato
+    simular(0.016, 1);
+    tActual = Math.random() * 100;
+    dibujar(tActual);
+  }
+
+  // ——— Clic: revienta la burbuja bajo el puntero ———
+  lienzo.addEventListener("pointerdown", (e) => {
+    let elegida = null, mejor = Infinity;
+    for (const bur of burbujas) {
+      const p = posicionPantalla(bur, tActual);
+      const d = Math.hypot(e.clientX - p.x, e.clientY - p.y);
+      if (d > radioActual(bur) + 10) continue;
+      // Prioriza las bandas cercanas (las que se ven al frente).
+      const puntaje = bur.banda * 1e5 + d;
+      if (puntaje < mejor) { mejor = puntaje; elegida = bur; }
+    }
+    if (elegida) {
+      reventar(elegida, tActual);
+      if (reducirMovimiento.matches) cuadroEstatico();
+    }
+  });
+
+  // ——— Controles ———
+  function vincular(id, aplicar) {
+    const slider = document.getElementById(id);
+    const salida = document.getElementById(id + "-out");
+    const refrescar = () => {
+      aplicar(parseFloat(slider.value), salida);
+      if (reducirMovimiento.matches) cuadroEstatico();
+    };
+    slider.addEventListener("input", refrescar);
+    refrescar();
+  }
+
+  vincular("tono", (v, out) => {
+    estado.tono = v;
+    out.textContent = v < 225 ? "azul" : v < 262 ? "índigo" : v < 305 ? "púrpura" : "rosa";
+  });
+  vincular("posicion", (v, out) => {
+    estado.posLuz = v / 100;
+    out.textContent = v < 33 ? "izquierda" : v < 67 ? "centro" : "derecha";
+  });
+  vincular("viscosidad", (v, out) => {
+    estado.viscosidad = v;
+    out.textContent = v < 3 ? "ligera" : v < 6.5 ? "media" : v < 8.5 ? "densa" : "miel";
+  });
+
+  // Ajusta la población de cada banda a su nuevo cupo, en vivo.
+  function sincronizarPoblacion() {
+    if (!W) return; // aún sin dimensiones: poblar() se encarga al arrancar
+    BANDAS.forEach((b, i) => {
+      const deLaBanda = burbujas.filter(o => o.banda === i);
+      for (let k = deLaBanda.length; k < b.n; k++) burbujas.push(crearBurbuja(i));
+      while (deLaBanda.length > b.n) {
+        const bur = deLaBanda.pop();
+        burbujas.splice(burbujas.indexOf(bur), 1);
+      }
+    });
+  }
+
+  vincular("cantidad", (v, out) => {
+    estado.cantidad = v;
+    out.textContent = Math.round(v);
+    BANDAS.forEach(b => { b.n = Math.max(2, Math.round(v * b.frac)); });
+    sincronizarPoblacion();
+  });
+
+  // ——— Slider doble: tamaño mínimo y máximo ———
+  const tamMin = document.getElementById("tam-min");
+  const tamMax = document.getElementById("tam-max");
+  const tamOut = document.getElementById("tam-out");
+  const tamRelleno = document.getElementById("tam-relleno");
+  const TAM_TOPE = { min: 3, max: 60, sep: 2 };
+
+  function aplicarTamano(desde) {
+    let lo = parseFloat(tamMin.value);
+    let hi = parseFloat(tamMax.value);
+    // El pulgar arrastrado empuja al otro si se cruzan (separación mínima).
+    if (hi - lo < TAM_TOPE.sep) {
+      if (desde === tamMin) {
+        hi = Math.min(TAM_TOPE.max, lo + TAM_TOPE.sep);
+        lo = hi - TAM_TOPE.sep;
+      } else {
+        lo = Math.max(TAM_TOPE.min, hi - TAM_TOPE.sep);
+        hi = lo + TAM_TOPE.sep;
+      }
+      tamMin.value = lo;
+      tamMax.value = hi;
+    }
+    if (desde) {
+      desde.style.zIndex = 5;
+      (desde === tamMin ? tamMax : tamMin).style.zIndex = 4;
+    }
+    estado.rMin = lo;
+    estado.rMax = hi;
+
+    const rango = TAM_TOPE.max - TAM_TOPE.min;
+    const a = ((lo - TAM_TOPE.min) / rango) * 100;
+    const z = ((hi - TAM_TOPE.min) / rango) * 100;
+    tamRelleno.style.left = a + "%";
+    tamRelleno.style.width = (z - a) + "%";
+    tamOut.textContent = `${lo}–${hi} px`;
+
+    // Las burbujas fuera del nuevo rango transicionan a un radio válido.
+    for (const bur of burbujas) {
+      const e = BANDAS[bur.banda].escala;
+      if (bur.rObj < lo * e || bur.rObj > hi * e) bur.rObj = radioAleatorio(bur.banda);
+    }
+    if (reducirMovimiento.matches) cuadroEstatico();
+  }
+
+  tamMin.addEventListener("input", () => aplicarTamano(tamMin));
+  tamMax.addEventListener("input", () => aplicarTamano(tamMax));
+  aplicarTamano();
+
+  // ——— Arranque ———
+  addEventListener("resize", () => {
+    redimensionar();
+    if (reducirMovimiento.matches) cuadroEstatico();
+  });
+  redimensionar();
+  poblar();
+  if (reducirMovimiento.matches) cuadroEstatico();
+  else requestAnimationFrame(cuadro);
+  reducirMovimiento.addEventListener("change", () => {
+    if (!reducirMovimiento.matches) requestAnimationFrame(cuadro);
+    else cuadroEstatico();
+  });
+})();
+</script>
