@@ -93,7 +93,7 @@
 </header>
 
 <figure class="pieza">
-  <canvas id="gl" aria-label="Icosaedro de vidrio sobre superficie de cotelé"></canvas>
+  <canvas id="gl" aria-label="Icosaedro de vidrio sobre una superficie gris con grano"></canvas>
   <figcaption>Arrastra para girar el prisma</figcaption>
 </figure>
 <p class="aviso" id="aviso">Tu navegador no soporta WebGL, necesario para esta pieza.</p>
@@ -168,6 +168,7 @@
 
     uniform vec2  uRes;
     uniform float uTiempo;
+    uniform float uGiro;     // rotacion acumulada del prisma (mueve la caustica)
     uniform mat3  uRot;      // objeto -> mundo
     uniform vec3  uCentro;
     uniform float uEscala;
@@ -210,22 +211,17 @@
       return col;
     }
 
-    // ——— Suelo: cotelé (canales paralelos con fibra fina) + sombra + cáustica ———
+    // ——— Suelo: superficie plana con grano fino + sombra + cáustica ———
     vec3 suelo(vec3 p) {
-      // canales del cotelé, girados unos 18 grados
-      const float CO = 0.951, SE = 0.309;
-      vec2 q = vec2(CO * p.x + SE * p.z, -SE * p.x + CO * p.z);
-      float u = q.x / 0.052;                    // ancho del canal
-      float onda = sin(6.28318 * u);
-      float cresta = cos(6.28318 * u);
-      vec2 aTraves = vec2(CO, SE);              // direccion perpendicular a los canales
-      vec3 N = normalize(vec3(-onda * 0.85 * aTraves.x, 1.0, -onda * 0.85 * aTraves.y));
-      float fibra = hash(vec2(floor(u * 3.0), floor(q.y * 150.0))) - 0.5;
-
-      float albedo = 0.30 + 0.05 * cresta + 0.05 * fibra;
+      float dist = length(p.xz);
+      // grano en dos escalas, atenuado con la distancia para evitar moire
+      float g1 = hash(floor(p.xz * 90.0)) - 0.5;
+      float g2 = hash(floor(p.xz * 260.0) + 7.3) - 0.5;
+      float grano = (g1 * 0.05 + g2 * 0.035) / (1.0 + dist * 0.6);
+      float albedo = 0.31 + grano;
       vec3 base = albedo * vec3(0.96, 0.955, 1.06);   // gris pizarra frio
 
-      float dif = max(dot(N, normalize(LUZ)), 0.0);
+      float dif = normalize(LUZ).y;                   // plano: difusa constante
       // franjas diagonales de luz y sombra, como ventanas fuera de cuadro
       float franja = 1.0 - 0.62 * smoothstep(1.6, 2.6, dot(p.xz, vec2(-0.42, -0.91)));
       franja *= 1.0 - 0.45 * smoothstep(2.2, 3.4, dot(p.xz, vec2(0.94, -0.34)));
@@ -241,27 +237,32 @@
       col *= 1.0 - 0.70 * cono;
       col *= 1.0 - 0.55 * exp(-dot(p.xz, p.xz) * 5.0); // sombra de contacto
 
-      // caustica: charco morado + radios blancos que escapan del vidrio
+      // caustica: charco morado + radios blancos que escapan del vidrio.
+      // Todo el patron interno se mueve con el giro del prisma (uGiro):
+      // el cono lo fija la luz, pero rayos e intensidades siguen a las facetas.
       vec2 rel = p.xz - sd * 0.30;
       float r = length(rel);
       float angRel = atan(rel.y, rel.x) - atan(sd.y, sd.x);
       float adelante = smoothstep(0.0, 0.25, cos(angRel));
       float charco = exp(-pow((r - 0.75) / 0.85, 2.0))
-                   * exp(-pow(sin(angRel) * r / 0.5, 2.0)) * adelante;
-      col += vec3(0.58, 0.26, 0.66) * charco * 1.15;
-      col += vec3(0.85, 0.55, 0.95) * exp(-r * r * 26.0) * 0.9; // brillo al pie del prisma
+                   * exp(-pow(sin(angRel + 0.12 * sin(uGiro)) * r / 0.5, 2.0)) * adelante;
+      col += vec3(0.58, 0.26, 0.66) * charco * (0.95 + 0.25 * sin(uGiro * 1.3));
+      col += vec3(0.85, 0.55, 0.95) * exp(-r * r * 26.0)
+           * (0.65 + 0.35 * sin(uGiro * 2.1 + 1.0)) * 0.9;   // brillo al pie del prisma
 
       for (int i = 0; i < 5; i++) {
-        float off = -0.55 + 0.275 * float(i) + 0.02 * sin(uTiempo * 0.2 + float(i));
+        // cada rayo oscila alrededor de su posicion segun la rotacion,
+        // con fase distinta: al girar, los destellos barren el suelo
+        float off = -0.55 + 0.275 * float(i) + 0.30 * sin(uGiro + float(i) * 1.7);
         float d = abs(sin(angRel - off)) * r;
+        float fuerza = 0.30 + 0.45 * (0.5 + 0.5 * sin(uGiro * 2.0 + float(i) * 2.4));
         float rayo = exp(-pow(d / (0.012 + 0.045 * r), 2.0))
                    * (1.0 - smoothstep(1.0, 3.2, r))
                    * smoothstep(0.0, 0.3, cos(angRel - off)) * adelante;
-        col += vec3(1.0, 0.92, 1.05) * rayo * 0.55;
+        col += vec3(1.0, 0.92, 1.05) * rayo * fuerza;
       }
 
       // fundido al entorno en la distancia
-      float dist = length(p.xz);
       return mix(col, vec3(0.02, 0.02, 0.03), smoothstep(5.0, 11.0, dist));
     }
 
@@ -473,7 +474,7 @@
     }
   }
 
-  const uRot = U("uRot"), uRes = U("uRes"), uTiempo = U("uTiempo");
+  const uRot = U("uRot"), uRes = U("uRes"), uTiempo = U("uTiempo"), uGiro = U("uGiro");
 
   function pintar(t) {
     redimensionar();
@@ -484,6 +485,7 @@
     ]));
     gl.uniform2f(uRes, lienzo.width, lienzo.height);
     gl.uniform1f(uTiempo, t);
+    gl.uniform1f(uGiro, yaw + pitch * 0.7);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
