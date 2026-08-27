@@ -383,6 +383,11 @@
 
   const lienzo = document.getElementById("lienzo");
   const ctx = lienzo.getContext("2d");
+
+  // Embebida como vista previa (iframe): la escena sin el panel de controles.
+  if (window.self !== window.top) {
+    document.querySelector(".panel").style.display = "none";
+  }
   const reducirMovimiento = matchMedia("(prefers-reduced-motion: reduce)");
 
   // ——— Estado controlado por los sliders ———
