@@ -17,12 +17,126 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html, body {
-    height: 100%;
+    min-height: 100%;
     background: var(--liquido-bajo);
     color: var(--texto);
     font-family: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
-    overflow: hidden;
   }
+  body { overflow-x: hidden; }
+
+  /* ——— Landing desplazable: el scroll revela el parallax ———
+     main deja pasar los clics al canvas; las secciones opacas los capturan */
+  main { pointer-events: none; }
+  .solido { pointer-events: auto; background: #000000; }
+
+  /* header negro con el título */
+  .masthead {
+    min-height: 44vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    text-align: center;
+    padding: 3rem 1.5rem;
+  }
+  .masthead .ceja {
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--acento);
+  }
+  .masthead h1 {
+    font-family: "Cormorant Garamond", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    letter-spacing: 0.04em;
+    text-wrap: balance;
+  }
+  .masthead .baja {
+    font-size: 0.78rem;
+    font-weight: 300;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--etiqueta);
+  }
+
+  /* hero transparente: se ven las burbujas y se puede jugar con ellas */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hero p {
+    font-family: "Cormorant Garamond", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: clamp(1.7rem, 4.5vw, 2.8rem);
+    letter-spacing: 0.06em;
+    color: rgba(244, 243, 246, 0.55);
+    text-wrap: balance;
+    text-align: center;
+    padding: 0 1.5rem;
+  }
+
+  /* sección del wordmark: el canvas dibuja aquí el negro con el recorte */
+  #marca { height: clamp(280px, 30vw, 480px); }
+
+  /* texto simulado de landing */
+  .prosa {
+    padding: 6.5rem 1.5rem 7rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.4rem;
+  }
+  .prosa h2 {
+    font-family: "Cormorant Garamond", "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    letter-spacing: 0.03em;
+    color: var(--texto);
+    text-wrap: balance;
+    text-align: center;
+    margin-bottom: 0.8rem;
+  }
+  .prosa p {
+    max-width: 62ch;
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.75;
+    color: #d4d4d4; /* gray-300 */
+  }
+
+  /* footer con los datos de artool */
+  .datos {
+    border-top: 1px solid rgba(244, 243, 246, 0.10);
+    padding: 2.6rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    text-align: center;
+  }
+  .datos .firma {
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    color: var(--texto);
+  }
+  .datos p, .datos a {
+    font-size: 0.76rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--etiqueta);
+    text-decoration: none;
+  }
+  .datos a:hover, .datos a:focus-visible { color: var(--acento-claro); }
+  .datos a:focus-visible { outline: 1px solid var(--acento-claro); outline-offset: 3px; }
 
   #lienzo {
     position: fixed;
@@ -38,32 +152,6 @@
     font-weight: 300;
     color: var(--etiqueta);
     letter-spacing: 0.03em;
-  }
-
-  /* ——— Sello tipográfico ——— */
-  .sello {
-    position: fixed;
-    top: 2rem;
-    left: 2.25rem;
-    pointer-events: none;
-    user-select: none;
-  }
-  .sello h1 {
-    font-family: "Cormorant Garamond", "Times New Roman", serif;
-    font-style: italic;
-    font-weight: 300;
-    font-size: clamp(1.9rem, 3.2vw, 2.6rem);
-    letter-spacing: 0.04em;
-    color: var(--texto);
-    text-wrap: balance;
-  }
-  .sello p {
-    margin-top: 0.3rem;
-    font-size: 0.72rem;
-    font-weight: 300;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--etiqueta);
   }
 
   /* ——— Panel de control ——— */
@@ -189,17 +277,47 @@
   }
 
   @media (max-width: 560px) {
-    .sello { top: 1.25rem; left: 1.25rem; }
     .panel { right: 50%; transform: translateX(50%); bottom: 1rem; }
   }
 </style>
 
 <canvas id="lienzo" aria-hidden="true"></canvas>
 
-<header class="sello">
-  <h1>Ascenso</h1>
-  <p>burbujas en medio viscoso</p>
-</header>
+<main>
+  <header class="masthead solido">
+    <p class="ceja">artool · code-art</p>
+    <h1>Ascenso</h1>
+    <p class="baja">burbujas en un medio viscoso</p>
+  </header>
+
+  <section class="hero" aria-label="Escena interactiva">
+    <p>todo lo que sube lo hace despacio</p>
+  </section>
+
+  <section id="marca" aria-label="artool"></section>
+
+  <section class="prosa solido">
+    <h2>Una landing que respira</h2>
+    <p>artool nace de una idea simple: las herramientas de trabajo también pueden
+       ser objetos hermosos. Diseñamos experiencias digitales donde el rendimiento
+       y la calma no compiten entre sí, sino que se sostienen mutuamente.</p>
+    <p>Cada superficie, cada animación y cada tono de esta página proviene de
+       nuestro sistema de diseño — los mismos grises profundos y morados que
+       encontrarás en nuestros productos. El fondo que asciende detrás de este
+       texto no es decoración: es una demostración.</p>
+    <p>Este es un texto simulado, escrito para evaluar la lectura sobre la escena.
+       Si llegaste hasta aquí con comodidad — con las burbujas subiendo al margen
+       de tu atención — entonces el experimento funciona.</p>
+  </section>
+
+  <footer class="datos solido">
+    <p class="firma">artool</p>
+    <p>Santiago de Chile</p>
+    <p><a href="https://artool.cl">artool.cl</a> · <a href="mailto:contacto@artool.cl">contacto@artool.cl</a></p>
+    <p><a href="https://github.com/artool-spa/code-art">github.com/artool-spa/code-art</a></p>
+    <p>© 2026 artool — «Ascenso» es un experimento de code-art.</p>
+  </footer>
+</main>
 
 <form class="panel" aria-label="Controles de la animación">
   <span class="titulo-panel">Medio · luz · burbujas</span>
@@ -283,6 +401,50 @@
   let W = 0, H = 0, dpr = 1;
   const capas = BANDAS.map(() => document.createElement("canvas").getContext("2d"));
 
+  // ——— Sección negra con el wordmark de artool como recorte ———
+  // El canvas la dibuja en primer plano donde el documento ubica a #marca:
+  // las letras son ventanas a la escena y dejan ver el parallax.
+  const marcaEl = document.getElementById("marca");
+  const LOGO_VB = { w: 1995.2, h: 458.63 };
+  const LOGO_D = [
+    "M0,268.82C0,144.33,88.92,84.13,168.27,84.13c58.11,0,90.21,33.18,96.57,42.59.24.36.45.69.61.97.31.52,1.12.7,1.7.65.71,0,1.67-.57,1.67-1.28v-36.1s118.33,0,118.33,0v355.69s-118.33,0-118.33,0v-33.52s-2.05,0-2.05,0c-2.74,6.16-36.25,40.36-98.5,40.36-79.35,0-168.27-60.19-168.27-184.68ZM276.42,268.82c0-52.18-37.8-82.5-82.86-82.5-43.61,0-82.13,31.03-82.13,82.5,0,51.47,38.52,82.5,82.13,82.5,45.06,0,82.86-30.32,82.86-82.5Z",
+    "M671.63,87.51l-25.54-.47c-55.67,0-87.81-2.16-102.54,39.69-.94,2.66-4.88,1.98-4.88-.84v-34.91h-118.34v355.69h118.34v-138.17c0-86.45,40.52-123.07,111.66-123.07l21.31-.09v-97.82Z",
+    "M703.69,90.97V0s118.33,0,118.33,0v90.97s75.24,0,75.24,0v95.35s-75.24,0-75.24,0v123.54c0,16.42,9.58,36.94,43.09,36.94,8.21,0,21.2-1.37,33.52-5.47v89.61c-13.68,15.05-45.83,19.84-72.51,19.84-71.14,0-122.44-34.2-122.44-123.12v-143.64s0-93.03,0-93.03Z",
+    "M916.15,268.82c0-124.43,96.45-189.81,190.16-189.81,93.03,0,189.47,65.38,189.47,189.81,0,124.43-96.45,189.81-189.47,189.81-93.71,0-190.16-65.38-190.16-189.81ZM1184.63,268.82c0-47.2-35.12-78.66-78.3-78.66-43.9,0-79.03,31.46-79.03,78.66,0,47.2,35.12,78.66,79.03,78.66,43.17,0,78.3-31.46,78.3-78.66Z",
+    "M1315.53,268.82c0-124.43,96.45-189.81,190.16-189.81,93.03,0,189.47,65.38,189.47,189.81,0,124.43-96.45,189.81-189.47,189.81-93.71,0-190.16-65.38-190.16-189.81ZM1584,268.82c0-47.2-35.12-78.66-78.3-78.66-43.9,0-79.03,31.46-79.03,78.66,0,47.2,35.12,78.66,79.03,78.66,43.17,0,78.3-31.46,78.3-78.66Z",
+    "M1720.35,0h118.33s0,446.66,0,446.66h-118.33s0-446.66,0-446.66Z",
+    "M1862.5,387.15c0-40.36,30.78-66.35,66.35-66.35,34.89,0,66.35,25.99,66.35,66.35,0,40.36-31.46,66.35-66.35,66.35-35.57,0-66.35-25.99-66.35-66.35Z",
+  ];
+  let rutaMarca = null;
+  let altoMarca = 0;
+
+  // ruta en coordenadas locales de la sección (0,0 = su esquina superior)
+  function construirMarca() {
+    altoMarca = marcaEl.clientHeight;
+    const logoW = Math.min(W * 0.56, W - 48); // el logo usa más del 50% del ancho
+    const esc = logoW / LOGO_VB.w;
+    const logoH = LOGO_VB.h * esc;
+    const m = new DOMMatrix([esc, 0, 0, esc,
+      (W - logoW) / 2,
+      (altoMarca - logoH) / 2,
+    ]);
+    rutaMarca = new Path2D();
+    rutaMarca.rect(0, 0, W, altoMarca);
+    for (const d of LOGO_D) rutaMarca.addPath(new Path2D(d), m);
+  }
+
+  // ——— Parallax de scroll ———
+  // Cada banda se desplaza a su propia velocidad al hacer scroll; el mundo
+  // de cada banda es más alto que la ventana para cubrir todo el recorrido.
+  const FACTOR_SCROLL = 0.35;
+  let desp = 0;          // scroll suavizado
+  let rangoScroll = 0;   // alto del documento menos la ventana
+
+  const fondoBanda = (i) => H + rangoScroll * FACTOR_SCROLL * BANDAS[i].parallax;
+  const despBanda = (i) => desp * FACTOR_SCROLL * BANDAS[i].parallax;
+  // cupo proporcional al alto del mundo, para conservar la densidad visible
+  const cupoBanda = (i) => Math.max(2, Math.round(BANDAS[i].n * fondoBanda(i) / H));
+
   function redimensionar() {
     dpr = Math.min(devicePixelRatio || 1, 2);
     W = innerWidth;
@@ -294,6 +456,9 @@
       capa.canvas.width = W * r;
       capa.canvas.height = H * r;
     });
+    rangoScroll = Math.max(0, document.documentElement.scrollHeight - H);
+    construirMarca();
+    sincronizarPoblacion();
   }
 
   // ——— Burbujas ———
@@ -311,7 +476,7 @@
     return {
       banda,
       x: Math.random(),                                   // 0–1 del ancho
-      y: yInicial !== undefined ? yInicial : Math.random() * (H + 200),
+      y: yInicial !== undefined ? yInicial : Math.random() * (fondoBanda(banda) + 200),
       r,
       rObj: r,                                            // radio objetivo (retamaño suave)
       fase: Math.random() * Math.PI * 2,
@@ -327,9 +492,7 @@
 
   function poblar() {
     burbujas.length = 0;
-    BANDAS.forEach((b, i) => {
-      for (let k = 0; k < b.n; k++) burbujas.push(crearBurbuja(i));
-    });
+    sincronizarPoblacion();
   }
 
   // Velocidad terminal tipo Stokes: crece con el radio, cae con la viscosidad.
@@ -367,8 +530,9 @@
         // excedente de la banda se retira en vez de reaparecer abajo.
         let enBanda = 0;
         for (const o of burbujas) if (o.banda === bur.banda) enBanda++;
-        if (enBanda > BANDAS[bur.banda].n) burbujas.splice(i, 1);
-        else Object.assign(bur, crearBurbuja(bur.banda, H + 40 + Math.random() * 120));
+        if (enBanda > cupoBanda(bur.banda)) burbujas.splice(i, 1);
+        else Object.assign(bur, crearBurbuja(bur.banda,
+          fondoBanda(bur.banda) + 40 + Math.random() * 120));
       }
     }
     for (let i = ondas.length - 1; i >= 0; i--) {
@@ -377,6 +541,7 @@
     }
     puntero.ox += (puntero.x - puntero.ox) * Math.min(1, dt * 2.5);
     puntero.oy += (puntero.y - puntero.oy) * Math.min(1, dt * 2.5);
+    desp += (scrollY - desp) * Math.min(1, dt * 4); // scroll suavizado
   }
 
   // ——— Reventar: divide la burbuja en 2–3 hijas conservando el volumen ———
@@ -384,7 +549,7 @@
     const b = BANDAS[bur.banda];
     return {
       x: bur.x * W + vaiven(bur, t) + puntero.ox * b.parallax,
-      y: bur.y + puntero.oy * b.parallax,
+      y: bur.y + puntero.oy * b.parallax - despBanda(bur.banda),
     };
   }
 
@@ -392,7 +557,9 @@
     const b = BANDAS[bur.banda];
     const p = posicionPantalla(bur, t);
     if (!reducirMovimiento.matches) {
-      ondas.push({ banda: bur.banda, x: p.x, y: p.y, r: radioActual(bur), edad: 0 });
+      // ancla la onda al mundo de su banda para que siga el parallax de scroll
+      ondas.push({ banda: bur.banda, x: p.x, y: p.y + despBanda(bur.banda),
+                   r: radioActual(bur), edad: 0 });
     }
     burbujas.splice(burbujas.indexOf(bur), 1);
 
@@ -513,7 +680,8 @@
         capa.strokeStyle = `hsl(${estado.tono} 45% 86% / ${0.55 * (1 - avance)})`;
         capa.lineWidth = Math.max(1, 2.5 * (1 - avance)) * res;
         capa.beginPath();
-        capa.arc(o.x * res, o.y * res, o.r * (1 + avance * 1.9) * res, 0, Math.PI * 2);
+        capa.arc(o.x * res, (o.y - despBanda(i)) * res,
+                 o.r * (1 + avance * 1.9) * res, 0, Math.PI * 2);
         capa.stroke();
       }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -522,6 +690,16 @@
       ctx.drawImage(capa.canvas, 0, 0, lienzo.width, lienzo.height);
       ctx.filter = "none";
       ctx.globalAlpha = 1;
+    }
+
+    // sección del wordmark en primer plano, anclada a #marca en el documento:
+    // rect negro + trazos del logo, relleno evenodd (las letras quedan
+    // perforadas y sus contadores internos permanecen)
+    const rectMarca = marcaEl.getBoundingClientRect();
+    if (rectMarca.top < H && rectMarca.bottom > 0) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, rectMarca.top * dpr);
+      ctx.fillStyle = "#000000";
+      ctx.fill(rutaMarca, "evenodd");
     }
   }
 
@@ -541,6 +719,7 @@
   function cuadroEstatico() {
     // Con movimiento reducido: una sola imagen fija, sin animación.
     for (const bur of burbujas) bur.r = bur.rObj; // sin lerp: aplica el tamaño de inmediato
+    desp = scrollY;                               // el parallax sigue al scroll sin suavizado
     simular(0.016, 1);
     tActual = Math.random() * 100;
     dibujar(tActual);
@@ -548,6 +727,12 @@
 
   // ——— Clic: revienta la burbuja bajo el puntero ———
   lienzo.addEventListener("pointerdown", (e) => {
+    // sobre la sección del wordmark, solo las letras (ventanas) aceptan el clic
+    const rm = marcaEl.getBoundingClientRect();
+    if (e.clientY >= rm.top && e.clientY <= rm.bottom) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      if (ctx.isPointInPath(rutaMarca, e.clientX, e.clientY - rm.top, "evenodd")) return;
+    }
     let elegida = null, mejor = Infinity;
     for (const bur of burbujas) {
       const p = posicionPantalla(bur, tActual);
@@ -661,6 +846,9 @@
     redimensionar();
     if (reducirMovimiento.matches) cuadroEstatico();
   });
+  addEventListener("scroll", () => {
+    if (reducirMovimiento.matches) cuadroEstatico();
+  }, { passive: true });
   redimensionar();
   poblar();
   if (reducirMovimiento.matches) cuadroEstatico();
