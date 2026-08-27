@@ -48,18 +48,47 @@
     width: min(92vw, 1000px);
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
+    gap: 1.1rem;
+  }
+  /* La escena es un solo canvas que baja hasta el wordmark; una máscara
+     de dos capas deja ver el cuadro arriba y el recorte del logo abajo. */
+  .escena {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
   }
   #gl {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    aspect-ratio: 1.28;
+    height: 100%;
     display: block;
-    border-radius: 6px;
     background: #17161e;
     cursor: grab;
     touch-action: none;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: left top, center bottom;
+    -webkit-mask-position: left top, center bottom;
   }
   #gl.arrastrando { cursor: grabbing; }
+  .espacio-imagen {
+    width: 100%;
+    aspect-ratio: 1.28;
+    pointer-events: none;
+  }
+  .espacio-marca {
+    width: min(52vw, 420px);
+    aspect-ratio: 1995.2 / 458.63;
+    pointer-events: none;
+  }
+  .espacio-marca svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
   figcaption {
     font-size: 0.72rem;
     font-weight: 300;
@@ -67,16 +96,6 @@
     text-transform: uppercase;
     color: var(--etiqueta);
     text-align: center;
-  }
-  .marca {
-    width: min(52vw, 420px);
-    margin-top: 0.5rem;
-  }
-  .marca svg {
-    width: 100%;
-    height: auto;
-    display: block;
-    filter: drop-shadow(0 22px 34px rgba(178, 136, 185, 0.16));
   }
   .aviso {
     color: var(--etiqueta);
@@ -92,57 +111,34 @@
   <p>icosaedro de vidrio · dispersión</p>
 </header>
 
-<figure class="pieza">
-  <canvas id="gl" aria-label="Icosaedro de vidrio sobre una superficie gris con grano"></canvas>
+<figure class="pieza" role="img"
+        aria-label="Icosaedro de vidrio sobre una superficie gris con grano; abajo, el logotipo de artool recortado sobre la continuación de la misma escena">
+  <div class="escena">
+    <canvas id="gl"></canvas>
+    <div class="espacio-imagen" id="espacioImagen"></div>
+    <div class="espacio-marca" id="espacioMarca" aria-hidden="true">
+      <!-- velo morado sobre el punto: la marca conserva su acento a través del recorte -->
+      <svg viewBox="0 0 1995.2 458.63"><use href="#puntoMarca" fill="#b288b9" fill-opacity="0.42"/></svg>
+    </div>
+  </div>
   <figcaption>Arrastra para girar el prisma</figcaption>
 </figure>
 <p class="aviso" id="aviso">Tu navegador no soporta WebGL, necesario para esta pieza.</p>
 
-<!-- ——— Wordmark de artool, modelado como vidrio con filtros SVG ——— -->
-<div class="marca">
-  <svg viewBox="0 0 1995.2 458.63" role="img" aria-label="artool">
-    <defs>
-      <g id="letras">
+<!-- ——— Wordmark de artool: fuente de la máscara de recorte ——— -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="marcaMascara" fill="#fff">
         <path d="M0,268.82C0,144.33,88.92,84.13,168.27,84.13c58.11,0,90.21,33.18,96.57,42.59.24.36.45.69.61.97.31.52,1.12.7,1.7.65.71,0,1.67-.57,1.67-1.28v-36.1s118.33,0,118.33,0v355.69s-118.33,0-118.33,0v-33.52s-2.05,0-2.05,0c-2.74,6.16-36.25,40.36-98.5,40.36-79.35,0-168.27-60.19-168.27-184.68ZM276.42,268.82c0-52.18-37.8-82.5-82.86-82.5-43.61,0-82.13,31.03-82.13,82.5,0,51.47,38.52,82.5,82.13,82.5,45.06,0,82.86-30.32,82.86-82.5Z"/>
         <path d="M671.63,87.51l-25.54-.47c-55.67,0-87.81-2.16-102.54,39.69-.94,2.66-4.88,1.98-4.88-.84v-34.91h-118.34v355.69h118.34v-138.17c0-86.45,40.52-123.07,111.66-123.07l21.31-.09v-97.82Z"/>
         <path d="M703.69,90.97V0s118.33,0,118.33,0v90.97s75.24,0,75.24,0v95.35s-75.24,0-75.24,0v123.54c0,16.42,9.58,36.94,43.09,36.94,8.21,0,21.2-1.37,33.52-5.47v89.61c-13.68,15.05-45.83,19.84-72.51,19.84-71.14,0-122.44-34.2-122.44-123.12v-143.64s0-93.03,0-93.03Z"/>
         <path d="M916.15,268.82c0-124.43,96.45-189.81,190.16-189.81,93.03,0,189.47,65.38,189.47,189.81,0,124.43-96.45,189.81-189.47,189.81-93.71,0-190.16-65.38-190.16-189.81ZM1184.63,268.82c0-47.2-35.12-78.66-78.3-78.66-43.9,0-79.03,31.46-79.03,78.66,0,47.2,35.12,78.66,79.03,78.66,43.17,0,78.3-31.46,78.3-78.66Z"/>
         <path d="M1315.53,268.82c0-124.43,96.45-189.81,190.16-189.81,93.03,0,189.47,65.38,189.47,189.81,0,124.43-96.45,189.81-189.47,189.81-93.71,0-190.16-65.38-190.16-189.81ZM1584,268.82c0-47.2-35.12-78.66-78.3-78.66-43.9,0-79.03,31.46-79.03,78.66,0,47.2,35.12,78.66,79.03,78.66,43.17,0,78.3-31.46,78.3-78.66Z"/>
         <path d="M1720.35,0h118.33s0,446.66,0,446.66h-118.33s0-446.66,0-446.66Z"/>
-      </g>
-      <path id="punto" d="M1862.5,387.15c0-40.36,30.78-66.35,66.35-66.35,34.89,0,66.35,25.99,66.35,66.35,0,40.36-31.46,66.35-66.35,66.35-35.57,0-66.35-25.99-66.35-66.35Z"/>
-
-      <linearGradient id="cuerpoVidrio" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#f4f3f6" stop-opacity="0.14"/>
-        <stop offset="0.55" stop-color="#c1a1c7" stop-opacity="0.10"/>
-        <stop offset="1" stop-color="#b288b9" stop-opacity="0.24"/>
-      </linearGradient>
-
-      <!-- Bisel especular: la luz cenital resbala por el borde superior del trazo -->
-      <filter id="vidrio" x="-15%" y="-40%" width="130%" height="190%">
-        <feGaussianBlur in="SourceAlpha" stdDeviation="7" result="relieve"/>
-        <feSpecularLighting in="relieve" surfaceScale="5" specularConstant="0.85"
-                            specularExponent="16" lighting-color="#ffffff" result="brillo">
-          <feDistantLight azimuth="255" elevation="58"/>
-        </feSpecularLighting>
-        <feComposite in="brillo" in2="SourceAlpha" operator="in" result="brilloRec"/>
-        <feMerge>
-          <feMergeNode in="SourceGraphic"/>
-          <feMergeNode in="brilloRec"/>
-        </feMerge>
-      </filter>
-    </defs>
-
-    <!-- Aberración cromática: bordes rojo y azul como en el vidrio real -->
-    <use href="#letras" fill="#ff5d7a" opacity="0.12" transform="translate(-7,0)"/>
-    <use href="#letras" fill="#6aa7ff" opacity="0.12" transform="translate(7,0)"/>
-    <use href="#letras" fill="url(#cuerpoVidrio)" filter="url(#vidrio)"/>
-
-    <use href="#punto" fill="#ff5d7a" opacity="0.18" transform="translate(-7,0)"/>
-    <use href="#punto" fill="#6aa7ff" opacity="0.18" transform="translate(7,0)"/>
-    <use href="#punto" fill="#b288b9" fill-opacity="0.55" filter="url(#vidrio)"/>
-  </svg>
-</div>
+      <path id="puntoMarca" d="M1862.5,387.15c0-40.36,30.78-66.35,66.35-66.35,34.89,0,66.35,25.99,66.35,66.35,0,40.36-31.46,66.35-66.35,66.35-35.57,0-66.35-25.99-66.35-66.35Z"/>
+    </g>
+  </defs>
+</svg>
 
 <script>
 (() => {
@@ -152,7 +148,7 @@
   const gl = lienzo.getContext("webgl", { antialias: true });
   if (!gl) {
     document.getElementById("aviso").style.display = "block";
-    lienzo.style.display = "none";
+    document.querySelector(".pieza").style.display = "none";
     return;
   }
   const reducirMovimiento = matchMedia("(prefers-reduced-motion: reduce)");
@@ -167,6 +163,7 @@
     precision highp float;
 
     uniform vec2  uRes;
+    uniform float uHImg;     // alto en px del cuadro superior: fija el encuadre
     uniform float uTiempo;
     uniform float uGiro;     // rotacion acumulada del prisma (mueve la caustica)
     uniform mat3  uRot;      // objeto -> mundo
@@ -295,7 +292,10 @@
     }
 
     void main() {
-      vec2 uv = (2.0 * gl_FragCoord.xy - uRes) / uRes.y;
+      // encuadre referido al cuadro superior: bajo el, la escena continua
+      // hacia abajo y se ve a traves del recorte del wordmark
+      vec2 fc = vec2(gl_FragCoord.x, gl_FragCoord.y - (uRes.y - uHImg));
+      vec2 uv = (2.0 * fc - vec2(uRes.x, uHImg)) / uHImg;
 
       // camara elevada, como en la fotografia de referencia
       vec3 ro = vec3(0.0, 2.30, 3.20);
@@ -338,9 +338,9 @@
         col = env(rd);
       }
 
-      // tono, viñeta y grano fotografico
+      // tono, viñeta y grano fotografico (la viñeta sigue el encuadre superior)
       col = pow(col * 1.25 / (col * 1.25 + 1.0), vec3(1.0 / 2.2));
-      vec2 v = gl_FragCoord.xy / uRes - 0.5;
+      vec2 v = vec2(gl_FragCoord.x / uRes.x, fc.y / uHImg) - 0.5;
       col *= 1.0 - 0.55 * dot(v, v);
       col += (hash(gl_FragCoord.xy + fract(uTiempo) * 100.0) - 0.5) * 0.022;
 
@@ -475,6 +475,15 @@
 
   const reloj = () => performance.now() / 1000;
 
+  // ——— Máscara de recorte: cuadro superior + silueta del wordmark abajo ———
+  const espacioImagen = document.getElementById("espacioImagen");
+  const espacioMarca = document.getElementById("espacioMarca");
+  const LOGO_URI = "data:image/svg+xml," + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1995.2 458.63">'
+    + document.getElementById("marcaMascara").outerHTML + "</svg>"
+  );
+  let hImgPx = 0;
+
   function redimensionar() {
     const dpr = Math.min(devicePixelRatio || 1, 2);
     const w = Math.round(lienzo.clientWidth * dpr);
@@ -484,9 +493,19 @@
       lienzo.height = h;
       gl.viewport(0, 0, w, h);
     }
+    hImgPx = espacioImagen.clientHeight * dpr;
+    // dos capas que se suman: rectangulo de la imagen + logo como cutout
+    const mascara = `linear-gradient(#000,#000), url("${LOGO_URI}")`;
+    const tam = `100% ${espacioImagen.clientHeight}px, `
+              + `${espacioMarca.clientWidth}px ${espacioMarca.clientHeight}px`;
+    lienzo.style.maskImage = mascara;
+    lienzo.style.webkitMaskImage = mascara;
+    lienzo.style.maskSize = tam;
+    lienzo.style.webkitMaskSize = tam;
   }
 
-  const uRot = U("uRot"), uRes = U("uRes"), uTiempo = U("uTiempo"), uGiro = U("uGiro");
+  const uRot = U("uRot"), uRes = U("uRes"), uTiempo = U("uTiempo"),
+        uGiro = U("uGiro"), uHImg = U("uHImg");
 
   function pintar(t) {
     redimensionar();
@@ -496,6 +515,7 @@
       R[0], R[3], R[6], R[1], R[4], R[7], R[2], R[5], R[8],
     ]));
     gl.uniform2f(uRes, lienzo.width, lienzo.height);
+    gl.uniform1f(uHImg, hImgPx);
     gl.uniform1f(uTiempo, t);
     gl.uniform1f(uGiro, yaw + pitch * 0.7);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
